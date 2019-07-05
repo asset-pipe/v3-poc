@@ -1,8 +1,11 @@
 'use strict';
 
 export function tools() {
-    return 1;
+    console.log('tools');
 }
 export function stuff() {
-    return 2;
+    console.log('stuff');
+}
+export function alertStuff() {
+    window.alert('hello!!!');
 }

@@ -8,83 +8,70 @@ const tar = require('tar');
 const { join } = require('path');
 const mkdir = require('make-dir');
 const semver = require('semver');
+const { Storage } = require('@google-cloud/storage');
 
-const { /*HOST = 'http://localhost',*/ PORT = 4001 } = process.env;
+process.env.GOOGLE_APPLICATION_CREDENTIALS = __dirname + '/gcloud.json';
+
+const {
+    /*HOST = 'http://localhost',*/ PORT = 4001,
+    BUCKET = 'asset-pipe-v3',
+} = process.env;
 
 const app = express();
 const upload = multer({ dest: 'tmp/' });
-
-async function versionExists(organisation, name, version) {
-    try {
-        const st = await stat(
-            join(__dirname, 'uploads', organisation, name, version)
-        );
-        return st.isDirectory();
-    } catch (err) {
-        console.log(err);
-        console.log('does not exist!');
-        return false;
-    }
-}
-
-async function extract({ src, dest }) {
-    await mkdir(dest);
-    await tar.extract({ file: src, C: dest });
-}
 
 async function unlinkFiles(...paths) {
     return Promise.all(paths.map(path => unlink(path)));
 }
 
+const storage = new Storage();
+
 // receive archive of js
 app.post(
     '/upload',
-    upload.fields([
-        { name: 'meta', maxCount: 1 },
-        { name: 'js', maxCount: 1 },
-        { name: 'css', maxCount: 1 },
-    ]),
+    upload.fields([{ name: 'package', maxCount: 1 }]),
     async (req, res) => {
         try {
-            const metaPath = join(__dirname, req.files.meta[0].path);
-            const jsArchive = req.files.js[0].path;
-            const cssArchive = req.files.css[0].path;
-            const jsArchivePath = join(__dirname, jsArchive);
-            const cssArchivePath = join(__dirname, cssArchive);
+            const [
+                organisation,
+                name,
+                version,
+            ] = req.files.package[0].originalname
+                .replace('.tgz', '')
+                .split(':');
+            const metaPath = join(__dirname, req.files.package[0].path);
 
-            const { organisation, name, version } = JSON.parse(
-                await readFile(metaPath)
-            );
+            try {
+                await storage
+                    .bucket(BUCKET)
+                    .file('tarballs/' + req.files.package[0].originalname)
+                    .getMetadata();
 
-            if (await versionExists(organisation, name, version)) {
-                await unlinkFiles(metaPath, jsArchivePath, cssArchivePath);
-                throw new Error('VERSION EXISTS');
+                // await unlinkFiles(metaPath);
+                res.status(500).send({
+                    error: 'VERSION EXISTS',
+                });
+            } catch (err) {
+                console.log(err);
             }
+
             if (!semver.valid(version)) {
-                await unlinkFiles(metaPath, jsArchivePath, cssArchivePath);
+                // await unlinkFiles(metaPath);
                 throw new Error('INVALID SEMVER VALUE');
             }
 
-            const jsPath = join(
-                __dirname,
-                'uploads',
-                organisation,
-                name,
-                version,
-                'js/src'
-            );
-            const cssPath = join(
-                __dirname,
-                'uploads',
-                organisation,
-                name,
-                version,
-                'css/src'
-            );
+            try {
+                await storage.bucket(BUCKET).upload(metaPath, {
+                    gzip: true,
+                    destination:
+                        'tarballs/' + req.files.package[0].originalname,
+                    metadata: { cacheControl: 'public, max-age=31536000' },
+                });
+            } catch (err) {
+                console.error('ERROR:', err);
+            }
 
-            await extract({ src: jsArchivePath, dest: jsPath });
-            await extract({ src: cssArchivePath, dest: cssPath });
-            await unlinkFiles(metaPath, jsArchivePath, cssArchivePath);
+            await unlinkFiles(metaPath);
 
             res.send({ success: true });
         } catch (err) {

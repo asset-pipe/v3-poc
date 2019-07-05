@@ -1,18 +1,21 @@
 'use strict';
 
-// import { tools, stuff } from './dep';
+import { tools, stuff, alertStuff } from './dep.js';
 
 function main() {
-    // tools();
-    // stuff();
+    tools();
+    stuff();
+    alertStuff();
 
-    fetch(document.getElementById('app').dataset.apiUrl + '/api')
-        .then(result => {
-            console.log(result);
-            return result.json();
-        })
-        .then(result => {
-            console.log(result);
-        });
+    console.log('hi there from the main file');
+
+    // fetch(document.getElementById('app').dataset.apiUrl + '/api')
+    //     .then(result => {
+    //         console.log(result);
+    //         return result.json();
+    //     })
+    //     .then(result => {
+    //         console.log(result);
+    //     });
 }
 main();

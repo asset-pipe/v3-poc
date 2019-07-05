@@ -21,11 +21,9 @@ function resolvePath(pathname) {
     return { dir, file, pathname };
 }
 
-function uploadFiles({ server, meta, js, css }) {
+function upload({ server, pkg } = {}) {
     const form = new FormData();
-    form.append('meta', fs.createReadStream(meta));
-    form.append('js', fs.createReadStream(js));
-    form.append('css', fs.createReadStream(css));
+    form.append('package', fs.createReadStream(pkg));
 
     return new Promise((resolve, reject) => {
         form.submit(`${server}/upload`, (err, res) => {
@@ -39,39 +37,55 @@ function uploadFiles({ server, meta, js, css }) {
 }
 
 function archive({ cwd, input, output, gzip = true }) {
-    return tar.create({ file: output, gzip, cwd }, [input]);
+    if (!Array.isArray(input)) input = [input];
+    return tar.create({ file: output, gzip, cwd }, input);
 }
 
 async function main(commands, metaPath = './assets.json') {
     if (commands[0] === 'publish') {
-        const pathToMeta = resolvePath(metaPath).pathname;
-        const meta = JSON.parse(fs.readFileSync(pathToMeta));
+        try {
+            const { pathname: pathToMeta, file: metaFilename } = resolvePath(
+                metaPath
+            );
+            const meta = JSON.parse(fs.readFileSync(pathToMeta));
+            const { organisation, name, version, server, inputs } = meta;
 
-        // produce archive of js
-        const jsAssetPaths = resolvePath(meta.inputs.js);
-        const cssAssetPaths = resolvePath(meta.inputs.css);
+            // produce archive of js
+            const jsAssetPaths = resolvePath(inputs.js);
+            const cssAssetPaths = resolvePath(inputs.css);
 
-        await mkdir(__dirname + '/tmp');
+            await mkdir(__dirname + '/tmp');
 
-        await archive({
-            cwd: jsAssetPaths.dir,
-            input: jsAssetPaths.file,
-            output: __dirname + '/tmp/archive-js.tgz',
-        });
-        await archive({
-            cwd: cssAssetPaths.dir,
-            input: cssAssetPaths.file,
-            output: __dirname + '/tmp/archive-css.tgz',
-        });
+            fs.writeFileSync(
+                __dirname + '/tmp/' + metaFilename,
+                JSON.stringify(meta, null, 2)
+            );
+            await archive({
+                cwd: jsAssetPaths.dir,
+                input: jsAssetPaths.file,
+                output: __dirname + '/tmp/js.tgz',
+            });
+            await archive({
+                cwd: cssAssetPaths.dir,
+                input: cssAssetPaths.file,
+                output: __dirname + '/tmp/css.tgz',
+            });
+            await archive({
+                cwd: __dirname + '/tmp',
+                input: ['css.tgz', 'js.tgz', metaFilename],
+                output:
+                    __dirname + `/tmp/${organisation}:${name}:${version}.tgz`,
+            });
 
-        const response = await uploadFiles({
-            server: meta.server,
-            meta: pathToMeta,
-            js: __dirname + '/tmp/archive-js.tgz',
-            css: __dirname + '/tmp/archive-css.tgz',
-        });
+            const response = await upload({
+                server,
+                pkg: __dirname + `/tmp/${organisation}:${name}:${version}.tgz`,
+            });
 
-        console.log(response);
+            console.log(response);
+        } catch (err) {
+            console.error(err);
+        }
     }
 
     if (commands[0] === 'version') {
