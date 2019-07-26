@@ -28,31 +28,31 @@ const storage = new Storage();
 
 // receive archive of js
 app.post(
-    '/upload',
-    upload.fields([{ name: 'package', maxCount: 1 }]),
+    '/global/publish',
+    upload.fields([{ name: 'file', maxCount: 1 }]),
     async (req, res) => {
         try {
             const [
                 organisation,
                 name,
                 version,
-            ] = req.files.package[0].originalname
-                .replace('.tgz', '')
-                .split(':');
-            const metaPath = join(__dirname, req.files.package[0].path);
+            ] = req.files.file[0].originalname.replace('.js', '').split(':');
+            const metaPath = join(__dirname, req.files.file[0].path);
 
             try {
                 await storage
                     .bucket(BUCKET)
-                    .file('tarballs/' + req.files.package[0].originalname)
+                    .file(`${organisation}/pkg/${name}/${version}`)
                     .getMetadata();
 
                 // await unlinkFiles(metaPath);
                 res.status(500).send({
                     error: 'VERSION EXISTS',
+                    url: `https://storage.cloud.google.com/${BUCKET}/${organisation}/pkg/${name}/${version}`,
                 });
+                return;
             } catch (err) {
-                console.log(err);
+                // console.log(err);
             }
 
             if (!semver.valid(version)) {
@@ -63,9 +63,11 @@ app.post(
             try {
                 await storage.bucket(BUCKET).upload(metaPath, {
                     gzip: true,
-                    destination:
-                        'tarballs/' + req.files.package[0].originalname,
-                    metadata: { cacheControl: 'public, max-age=31536000' },
+                    destination: `/${organisation}/pkg/${name}/${version}`,
+                    metadata: {
+                        cacheControl: 'public, max-age=31536000',
+                        contentType: 'application/javascript',
+                    },
                 });
             } catch (err) {
                 console.error('ERROR:', err);
@@ -73,7 +75,10 @@ app.post(
 
             await unlinkFiles(metaPath);
 
-            res.send({ success: true });
+            res.send({
+                success: true,
+                url: `https://storage.cloud.google.com/${BUCKET}/${organisation}/pkg/${name}/${version}`,
+            });
         } catch (err) {
             console.error(err);
             res.status(500).send({
