@@ -14,12 +14,22 @@ const commonjs = require('rollup-plugin-commonjs');
 const replace = require('rollup-plugin-replace');
 const resolve = require('rollup-plugin-node-resolve');
 const { terser } = require('rollup-plugin-terser');
+const esmImportToUrl = require('rollup-plugin-esm-import-to-url');
 const semver = require('semver');
 const ora = require('ora');
+const readPkgUp = require('read-pkg-up');
+const pkgDir = require('pkg-dir');
 
-function upload({ server, file } = {}) {
+const BUCKET = 'asset-pipe-v3';
+
+function upload({ server, file, org, pkg, version, force = false } = {}) {
     const form = new FormData();
-    form.append('file', createReadStream(file));
+    form.append('src', createReadStream(file));
+    form.append('map', createReadStream(`${file}.map`));
+    form.append('org', org);
+    form.append('pkg', pkg);
+    form.append('version', version);
+    form.append('force', force ? 'true' : 'false');
 
     return new Promise((resolve, reject) => {
         form.submit(`${server}/global/publish`, (err, res) => {
@@ -32,7 +42,13 @@ function upload({ server, file } = {}) {
     });
 }
 
-async function main(pkg, org, server = 'http://localhost:4001') {
+async function main(
+    pkg,
+    org,
+    server = 'http://localhost:4001',
+    globals = [],
+    force
+) {
     console.log('');
     console.log('✨', 'Asset Pipe Global Publish', '✨');
     console.log('');
@@ -41,6 +57,8 @@ async function main(pkg, org, server = 'http://localhost:4001') {
     const [name, version] = pkg.trim().split('@');
     let path = '';
     let file = '';
+    let modulePkgName = '';
+    let modulePkgVersion = '';
     let result = {};
 
     if (!pkg.includes('@')) {
@@ -69,7 +87,7 @@ async function main(pkg, org, server = 'http://localhost:4001') {
     const tempDirSpinner = ora('Creating temp directory').start();
     try {
         path = join(tempDir, `global-publish-${name}-${version}`);
-        mkdir(path);
+        mkdir.sync(path);
     } catch (err) {
         tempDirSpinner.fail('Unable to create temp dir');
 
@@ -123,16 +141,86 @@ async function main(pkg, org, server = 'http://localhost:4001') {
     }
     npmInstallSpinner.succeed();
 
-    const bundleSpinner = ora('Creating bundle in temp directory').start();
+    let installedDepBasePath = '';
+    let installedDepPkgJson = {};
 
+    const loadingPackageMetaSpinner = ora(
+        `Loading meta information for ${pkg} package`
+    ).start();
     try {
         const resolvedPath = require.resolve(name, { paths: [path] });
-        const installedDepBasePath = dirname(resolvedPath);
-        const installedDepPackagePath = join(
-            installedDepBasePath,
-            'package.json'
+        installedDepBasePath = pkgDir.sync(dirname(resolvedPath));
+        installedDepPkgJson = readPkgUp.sync({
+            cwd: installedDepBasePath,
+        }).package;
+    } catch (err) {
+        loadingPackageMetaSpinner.fail(
+            'Unable to load package meta information'
         );
-        const installedDepPkgJson = require(installedDepPackagePath);
+
+        console.log('==========');
+        console.error(err.message);
+        console.log('==========');
+
+        process.exit();
+    }
+    loadingPackageMetaSpinner.succeed();
+
+    const checkPeerDependenciesSpinner = ora(
+        `Checking for peer dependencies`
+    ).start();
+    try {
+        if (installedDepPkgJson.peerDependencies) {
+            // check that a global flag has been supplied for each
+            for (const dep of Object.keys(
+                installedDepPkgJson.peerDependencies
+            )) {
+                const globalPkgNames = globals.map(global => {
+                    const [moduleName] = global.split('@');
+                    return moduleName;
+                });
+                if (!globalPkgNames.includes(dep)) {
+                    checkPeerDependenciesSpinner.fail(
+                        `Package ${pkg} contains peer dependencies that must be specified`
+                    );
+
+                    console.log('==========');
+                    console.error(
+                        `You can fix this error by doing the following:
+    1. Globally publish an appropriate version of "${dep}"
+    2. Republish ${pkg} with the --global (-g) flag to define "${dep}" as a global peer dependency "${dep}".
+        Eg. -g ${dep}@1.0.0`
+                    );
+                    console.log('==========');
+
+                    process.exit();
+                }
+            }
+        }
+    } catch (err) {
+        checkPeerDependenciesSpinner.fail(
+            'Unable to complete check for peer dependencies'
+        );
+
+        console.log('==========');
+        console.error(err.message);
+        console.log('==========');
+
+        process.exit();
+    }
+    checkPeerDependenciesSpinner.succeed();
+
+    const bundleSpinner = ora('Creating bundle in temp directory').start();
+    try {
+        const imports = {};
+        if (globals.length) {
+            globals.forEach(global => {
+                const [moduleName, moduleVersion] = global.split('@');
+                imports[
+                    moduleName
+                ] = `https://${BUCKET}.storage.googleapis.com/${org}/pkg/${moduleName}/${moduleVersion}/index.js`;
+            });
+        }
 
         const options = {
             onwarn: (warning, warn) => {
@@ -140,7 +228,10 @@ async function main(pkg, org, server = 'http://localhost:4001') {
             },
             plugins: [
                 resolve(),
-                commonjs(),
+                commonjs({
+                    include: /node_modules/,
+                }),
+                esmImportToUrl({ imports }),
                 replace({
                     'process.env.NODE_ENV': JSON.stringify('production'),
                 }),
@@ -164,15 +255,16 @@ async function main(pkg, org, server = 'http://localhost:4001') {
             );
         }
 
-        file = join(
-            path,
-            `${org}:${installedDepPkgJson.name}:${
-                installedDepPkgJson.version
-            }.js`
-        );
+        file = join(path, `index.js`);
+        modulePkgName = installedDepPkgJson.name;
+        modulePkgVersion = installedDepPkgJson.version;
 
         const bundled = await rollup.rollup(options);
-        await bundled.write({ format: 'esm', file });
+        await bundled.write({
+            format: 'esm',
+            file,
+            sourcemap: true,
+        });
     } catch (err) {
         bundleSpinner.fail('Unable to complete bundle operation');
 
@@ -186,7 +278,14 @@ async function main(pkg, org, server = 'http://localhost:4001') {
 
     const uploadSpinner = ora('Uploading bundle to asset server').start();
     try {
-        result = await upload({ server, file });
+        result = await upload({
+            server,
+            file,
+            org,
+            pkg: modulePkgName,
+            version: modulePkgVersion,
+            force,
+        });
         if (result.error) {
             uploadSpinner.text = `${
                 uploadSpinner.text
@@ -215,9 +314,33 @@ if (!module.parent) {
         // process args
         const [pkg] = yargs.argv._;
         const org = yargs.argv.org;
+        let globals = yargs.argv.globals || yargs.argv.g;
+        const force = yargs.argv.force || yargs.argv.f;
         const server = yargs.argv.server;
-
-        main(pkg, org, server);
+        if (globals) {
+            if (globals === true) {
+                console.error('flag --globals (-g) requires an argument');
+                process.exit();
+            }
+            globals = Array.isArray(globals) ? globals : [globals];
+            globals.forEach(global => {
+                if (!global.includes('@')) {
+                    console.error(
+                        'flag --globals (-g) expects argument of the form <pkg>@<version>. eg. react@16.8.0'
+                    );
+                    process.exit();
+                }
+                // check package exists
+                const cmdout = execSync(`npm show ${global} --loglevel=silent`);
+                if (!cmdout.toString().trim()) {
+                    console.error(
+                        'flag --globals (-g) expects argument to contain valid package name and version eg. react@16.8.0'
+                    );
+                    process.exit();
+                }
+            });
+        }
+        main(pkg, org, server, globals, !!force);
     } catch (err) {
         console.error(err);
     }
