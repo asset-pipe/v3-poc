@@ -188,8 +188,8 @@ async function main(
                     console.error(
                         `You can fix this error by doing the following:
     1. Globally publish an appropriate version of "${dep}"
-    2. Republish ${pkg} with the --global (-g) flag to define "${dep}" as a global peer dependency "${dep}".
-        Eg. -g ${dep}@1.0.0`
+    2. Republish ${pkg} with the --replaceBareImports (-r) flag to define "${dep}" as a global peer dependency "${dep}".
+        Eg. -r ${dep}@1.0.0`
                     );
                     console.log('==========');
 
