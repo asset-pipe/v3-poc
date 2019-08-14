@@ -60,6 +60,7 @@ async function main(
         server = '',
         replaceBareImports = [],
         name = '',
+        type = 'js',
     }
 ) {
     if (global) {
@@ -82,9 +83,20 @@ async function main(
             );
         } else if (command === 'map') {
             if (subcommands[0] === 'set') {
-                globalMapSet();
+                globalMapSet({
+                    server,
+                    org: organisation,
+                    bare: subcommands[1],
+                    pkg: subcommands[2],
+                    type,
+                });
             } else if (subcommands[0] === 'unset') {
-                globalMapUnset();
+                globalMapUnset({
+                    server,
+                    org: organisation,
+                    bare: subcommands[1],
+                    type,
+                });
             }
         }
     } else if (command === 'publish') {
@@ -109,6 +121,10 @@ module.exports = {
     global: {
         alias: globalAliasCmd,
         publish: globalPublishCmd,
+        map: {
+            set: globalMapSet,
+            unset: globalMapUnset,
+        },
     },
     publish: publishCmd,
     version: versionCmd,
@@ -125,6 +141,7 @@ if (runningAsScript) {
     let server = yargs.argv.server || yargs.argv.s;
     const global = yargs.argv.global || yargs.argv.g;
     const force = yargs.argv.force || yargs.argv.f;
+    const type = yargs.argv.type || yargs.argv.t;
     const replaceBareImports = yargs.argv.replaceBareImports || yargs.argv.r;
 
     try {
@@ -178,5 +195,6 @@ if (runningAsScript) {
         replaceBareImports,
         metaPath,
         name,
+        type,
     });
 }

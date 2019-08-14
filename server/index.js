@@ -211,33 +211,159 @@ app.post(
     '/global/map/set',
     upload.fields([
         { name: 'org', maxCount: 1 },
+        { name: 'bare', maxCount: 1 },
         { name: 'pkg', maxCount: 1 },
-        { name: 'version', maxCount: 1 },
     ]),
-    async (req, res) => {}
+    async (req, res) => {
+        let organisation = '';
+        let type = '';
+
+        try {
+            const pkg = req.body.pkg;
+            organisation = req.body.org;
+            type = req.body.type;
+
+            // TODO: input validation
+
+            const [exists] = await storage
+                .bucket(BUCKET)
+                .file(`${organisation}/import-map.${type}.json`)
+                .exists();
+
+            if (!exists) {
+                await storage
+                    .bucket(BUCKET)
+                    .file(`${organisation}/import-map.${type}.json`)
+                    .save('{"imports": {}}');
+            }
+
+            // get import map if exists
+            const [contents] = await storage
+                .bucket(BUCKET)
+                .file(`${organisation}/import-map.${type}.json`)
+                .download();
+            const importMap = JSON.parse(contents);
+
+            // convert pkg into correct value if necessary
+            let val = pkg;
+            if (pkg.includes('@')) {
+                const [left, right] = pkg.trim().split('@');
+                if (semver.valid(right)) {
+                    // specific version
+                    val = `${HOST}:${PORT}/${organisation}/pkg/${left}/${right}/index.${type}`;
+                    // TODO: check for existence
+                } else {
+                    // assume an alias
+                    val = `${HOST}:${PORT}/${organisation}/alias/${left}/${right}/index.${type}`;
+                    // TODO: check for existence
+                }
+            }
+
+            // set imports[bare] = value
+            importMap.imports[req.body.bare] = val;
+
+            // save import map
+            await storage
+                .bucket(BUCKET)
+                .file(`${organisation}/import-map.${type}.json`)
+                .save(JSON.stringify(importMap, null, 2));
+
+            res.send({
+                success: true,
+                url: `${HOST}:${PORT}/${organisation}/import-map.${type}.json`,
+            });
+        } catch (err) {
+            console.error(err);
+            res.send({
+                success: false,
+                url: `${HOST}:${PORT}/${organisation}/import-map.${type}.json`,
+            });
+        }
+    }
 );
 
 app.post(
     '/global/map/unset',
     upload.fields([
+        // org name
         { name: 'org', maxCount: 1 },
-        { name: 'pkg', maxCount: 1 },
-        { name: 'version', maxCount: 1 },
+        // the name of the bare import
+        { name: 'bare', maxCount: 1 },
+        // js or css
+        { name: 'type', maxCount: 1 },
     ]),
-    async (req, res) => {}
+    async (req, res) => {
+        let organisation = '';
+        let type = '';
+
+        // TODO: input validation
+
+        try {
+            organisation = req.body.org;
+            type = req.body.type;
+
+            // get import map if exists
+            const [contents] = await storage
+                .bucket(BUCKET)
+                .file(`${organisation}/import-map.${type}.json`)
+                .download();
+            const importMap = JSON.parse(contents);
+
+            // delete imports[bare]
+            delete importMap.imports[req.body.bare];
+
+            // save import map
+            await storage
+                .bucket(BUCKET)
+                .file(`${organisation}/import-map.${type}.json`)
+                .save(JSON.stringify(importMap, null, 2));
+
+            res.send({
+                success: true,
+                url: `${HOST}:${PORT}/${organisation}/import-map.${type}.json`,
+            });
+        } catch (err) {
+            console.error(err);
+            res.send({
+                success: false,
+                url: `${HOST}:${PORT}/${organisation}/import-map.${type}.json`,
+            });
+        }
+    }
 );
 
 app.post(
     '/publish',
     upload.fields([
         { name: 'org', maxCount: 1 },
-        { name: 'pkg', maxCount: 1 },
+        // app name
+        { name: 'name', maxCount: 1 },
+        // app version
         { name: 'version', maxCount: 1 },
+        // main js bundle file with any global imports replaced
+        { name: 'main:js', maxCount: 1 },
+        // main css bundle file with any global imports replaced
+        { name: 'main:css', maxCount: 1 },
+        // fallback js bundle file for ie11 without any global imports replaced
+        { name: 'fallback:js', maxCount: 1 },
+        // fallback css bundle file for ie11 without any global imports replaced
+        { name: 'fallback:css', maxCount: 1 },
+        // map of replaced global js imports
+        { name: 'preload:js', maxCount: 1 },
+        // map of replaced global css imports
+        { name: 'preload:css', maxCount: 1 },
     ]),
-    async (req, res) => {}
+    async (req, res) => {
+        // save main js file to /:org/:name/:version/index.js
+        // save main css file to /:org/:name/:version/index.css
+        // save fallback js file to /:org/:name/:version/fallback.js
+        // save fallback css file to /:org/:name/:version/fallback.css
+        // save imports js file to /:org/:name/:version/imports.js.json
+        // save imports css file to /:org/:name/:version/imports.css.json
+    }
 );
 
-app.use('/', express.static('uploads'));
+// app.use('/', express.static('uploads'));
 
 app.get('/:org/bundle/:name/:version/index.js', (req, res) => {
     // res.redirect(301, ...)
@@ -272,8 +398,13 @@ app.get('/:org/alias/:name/:alias/index.css', aliasMiddleware, (req, res) => {
     // res.redirect(302, ...)
 });
 
-app.get('/:org/map', (req, res) => {
-    // res.redirect(301, ...)
+app.get('/:org/map/:type', async (req, res) => {
+    const { org, type } = req.params;
+    await storage
+        .bucket(BUCKET)
+        .file(`/${org}/import-map.${type}.json`)
+        .createReadStream()
+        .pipe(res);
 });
 
 app.listen(PORT, () => {
