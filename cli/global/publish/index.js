@@ -227,11 +227,11 @@ async function main(
                 // Supress logging
             },
             plugins: [
+                esmImportToUrl({ imports }),
                 resolve(),
                 commonjs({
                     include: /node_modules/,
                 }),
-                esmImportToUrl({ imports }),
                 replace({
                     'process.env.NODE_ENV': JSON.stringify('production'),
                 }),

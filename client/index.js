@@ -10,8 +10,6 @@ function validateMeta(meta) {
         throw new Error('asset definition file missing required key "server"');
     if (!meta.inputs)
         throw new Error('asset definition file missing required key "inputs"');
-    if (!meta.outputs)
-        throw new Error('asset definition file missing required key "outputs"');
     if (!meta.name)
         throw new Error('asset definition file missing required key "name"');
     if (!meta.version)
@@ -23,10 +21,27 @@ function validateMeta(meta) {
 }
 
 module.exports = class Client {
-    constructor({ js, css }) {
+    constructor({ js, css, development = false }) {
         let meta = null;
         this.scripts = [];
         this.styles = [];
+
+        if (development) {
+            if (js) {
+                this.scripts.push({
+                    type: 'esm',
+                    value: js,
+                    development: true,
+                });
+            }
+            if (css) {
+                this.styles.push({
+                    value: css,
+                    development: true,
+                });
+            }
+            return;
+        }
 
         try {
             const metaPath = join(pkgDir.sync(), 'assets.json');
@@ -37,42 +52,19 @@ module.exports = class Client {
         if (meta) {
             validateMeta(meta);
 
-            const {
-                server,
-                inputs,
-                outputs,
-                organisation,
-                name,
-                version,
-            } = meta;
+            const { server, inputs, organisation, name, version } = meta;
 
             if (inputs.js) {
-                const scripts = outputs.js || 'scripts.js';
                 this.scripts.push({
-                    value: `${server}/${organisation}/${name}/${version}/js/src/${scripts}`,
+                    value: `${server}/${organisation}/bundle/${name}/${version}/index.js`,
                     type: 'esm',
                 });
             }
             if (inputs.css) {
-                const styles = outputs.css || 'styles.css';
                 this.styles.push({
-                    value: `${server}/${organisation}/${name}/${version}/css/src/${styles}`,
+                    value: `${server}/${organisation}/bundle/${name}/${version}/index.css`,
                 });
             }
-        }
-
-        if (js) {
-            this.scripts.push({
-                type: 'esm',
-                value: js,
-                development: true,
-            });
-        }
-        if (css) {
-            this.styles.push({
-                value: css,
-                development: true,
-            });
         }
     }
 

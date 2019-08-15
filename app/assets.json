@@ -1,10 +1,10 @@
 {
-    "organisation": "finn",
-    "name": "my-test",
-    "version": "2.0.2",
-    "server": "http://localhost:4001",
-    "inputs": {
-        "js": "./assets/scripts.js",
-        "css": "./assets/styles.css"
-    }
+  "organisation": "finn",
+  "name": "my-test",
+  "version": "2.0.9",
+  "server": "http://localhost:4001",
+  "inputs": {
+    "js": "./assets/scripts.js",
+    "css": "./assets/styles.css"
+  }
 }

@@ -1,5 +1,7 @@
 'use strict';
 
+import lodash from 'lodash';
+import get from 'lodash.get';
 import { tools, stuff, alertStuff } from './dep.js';
 
 function main() {
@@ -8,14 +10,7 @@ function main() {
     alertStuff();
 
     console.log('hi there from the main file');
-
-    // fetch(document.getElementById('app').dataset.apiUrl + '/api')
-    //     .then(result => {
-    //         console.log(result);
-    //         return result.json();
-    //     })
-    //     .then(result => {
-    //         console.log(result);
-    //     });
+    console.log('lodash.get', lodash.get);
+    console.log('get', get);
 }
 main();

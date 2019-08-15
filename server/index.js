@@ -344,6 +344,10 @@ app.post(
         { name: 'main:js', maxCount: 1 },
         // main css bundle file with any global imports replaced
         { name: 'main:css', maxCount: 1 },
+
+        { name: 'sourcemap:js', maxCount: 1 },
+        { name: 'sourcemap:css', maxCount: 1 },
+
         // fallback js bundle file for ie11 without any global imports replaced
         { name: 'fallback:js', maxCount: 1 },
         // fallback css bundle file for ie11 without any global imports replaced
@@ -354,19 +358,80 @@ app.post(
         { name: 'preload:css', maxCount: 1 },
     ]),
     async (req, res) => {
-        // save main js file to /:org/:name/:version/index.js
-        // save main css file to /:org/:name/:version/index.css
-        // save fallback js file to /:org/:name/:version/fallback.js
-        // save fallback css file to /:org/:name/:version/fallback.css
-        // save imports js file to /:org/:name/:version/imports.js.json
-        // save imports css file to /:org/:name/:version/imports.css.json
+        try {
+            const organisation = req.body.org;
+            const name = req.body.name;
+            const version = req.body.version;
+
+            const mainJS = join(__dirname, req.files['main:js'][0].path);
+            const sourcemapJS = join(
+                __dirname,
+                req.files['sourcemap:js'][0].path
+            );
+            // const mainCSS = join(__dirname, req.files['main:css'][0].path);
+            // const fallbackJS = join(__dirname, req.files['fallback:js'][0].path);
+            // const fallbackCSS = join(__dirname, req.files['fallback:css'][0].path);
+            // const importsJS = join(__dirname, req.files['imports:js'][0].path);
+            // const importsCSS = join(__dirname, req.files['imports:css'][0].path);
+
+            // save main js file to /:org/bundle/:name/:version/index.js
+            await Promise.all([
+                storage.bucket(BUCKET).upload(mainJS, {
+                    gzip: true,
+                    destination: `/${organisation}/bundle/${name}/${version}/index.js`,
+                    metadata: {
+                        cacheControl: 'public, max-age=31536000',
+                        contentType: 'application/javascript',
+                    },
+                }),
+                storage.bucket(BUCKET).upload(sourcemapJS, {
+                    gzip: true,
+                    destination: `/${organisation}/bundle/${name}/${version}/index.js.map`,
+                    metadata: {
+                        cacheControl: 'public, max-age=31536000',
+                        contentType: 'application/javascript',
+                    },
+                }),
+            ]);
+
+            // save main css file to /:org/:name/:version/index.css
+            // save fallback js file to /:org/:name/:version/fallback.js
+            // save fallback css file to /:org/:name/:version/fallback.css
+            // save imports js file to /:org/:name/:version/imports.js.json
+            // save imports css file to /:org/:name/:version/imports.css.json
+            res.send({
+                success: true,
+                url: `${HOST}:${PORT}/${organisation}/bundle/${name}/${version}/index.js`,
+            });
+        } catch (err) {
+            console.error(err);
+            res.send({
+                success: false,
+                url: `${HOST}:${PORT}/${organisation}/bundle/${name}/${version}/index.js`,
+            });
+        }
     }
 );
 
 // app.use('/', express.static('uploads'));
 
-app.get('/:org/bundle/:name/:version/index.js', (req, res) => {
-    // res.redirect(301, ...)
+app.get('/:org/bundle/:name/:version/index.js', async (req, res) => {
+    res.type('application/javascript');
+    const { org, name, version } = req.params;
+    await storage
+        .bucket(BUCKET)
+        .file(`/${org}/bundle/${name}/${version}/index.js`)
+        .createReadStream()
+        .pipe(res);
+});
+
+app.get('/:org/bundle/:name/:version/index.js.map', async (req, res) => {
+    const { org, name, version } = req.params;
+    await storage
+        .bucket(BUCKET)
+        .file(`/${org}/bundle/${name}/${version}/index.js.map`)
+        .createReadStream()
+        .pipe(res);
 });
 
 app.get('/:org/bundle/:name/:version/index.css', (req, res) => {
@@ -375,6 +440,7 @@ app.get('/:org/bundle/:name/:version/index.css', (req, res) => {
 
 app.get('/:org/pkg/:name/:version/index.js', async (req, res) => {
     const { org, name, version } = req.params;
+    res.type('application/javascript');
     await storage
         .bucket(BUCKET)
         .file(`/${org}/pkg/${name}/${version}/index.js`)
@@ -387,6 +453,7 @@ app.get('/:org/pkg/:name/:version/index.css', (req, res) => {
 });
 
 app.get('/:org/alias/:name/:alias/index.js', aliasMiddleware, (req, res) => {
+    res.type('application/javascript');
     const version = aliases[req.params.org][req.params.name][req.params.alias];
     res.redirect(
         302,

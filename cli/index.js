@@ -100,16 +100,7 @@ async function main(
             }
         }
     } else if (command === 'publish') {
-        publishCmd({
-            name,
-            version,
-            organisation,
-            js,
-            css,
-            server,
-            force,
-            importMap: {}, //TODO: load in import map fetched from server
-        });
+        publishCmd();
     } else if (command === 'version') {
         versionCmd(subcommands[0], metaPath);
     } else if (command === 'init') {

@@ -19,8 +19,9 @@ const podlet = new Podlet({
 app.use(podlet.middleware());
 
 const assets = new Assets({
-    js: '/assets/scripts.js',
+    js: '/assets/assets/scripts.js',
     css: '/assets/styles.css',
+    development: process.env.NODE_ENV !== 'production',
 });
 podlet.js(assets.js);
 podlet.css(assets.css);
