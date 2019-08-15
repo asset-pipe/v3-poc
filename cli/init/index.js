@@ -40,10 +40,6 @@ async function main(metaPath = './assets.json') {
                     js: '[path to js entrypoint]',
                     css: '[path to css entrypoint]',
                 },
-                outputs: {
-                    js: '[output js filename]',
-                    css: '[output css filename]',
-                },
             },
             null,
             2
