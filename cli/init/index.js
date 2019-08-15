@@ -1,21 +1,7 @@
-#!/usr/bin/env node
-
 'use strict';
 
-const yargs = require('yargs');
 const fs = require('fs');
-const path = require('path');
-
-const runningAsScript = !module.parent;
-
-function resolvePath(pathname) {
-    if (!path.isAbsolute(pathname)) {
-        pathname = path.normalize(`${process.cwd()}/${pathname}`);
-    }
-
-    const { dir, base: file } = path.parse(pathname);
-    return { dir, file, pathname };
-}
+const { resolvePath } = require('../utils');
 
 async function main(metaPath = './assets.json') {
     const pathToMeta = resolvePath(metaPath).pathname;
@@ -49,10 +35,3 @@ async function main(metaPath = './assets.json') {
 }
 
 module.exports = main;
-
-// only do this if run as a cli
-if (runningAsScript) {
-    const argv = yargs.argv;
-    const path = argv.path;
-    main(path);
-}

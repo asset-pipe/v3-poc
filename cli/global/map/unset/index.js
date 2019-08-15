@@ -1,8 +1,5 @@
-#!/usr/bin/env node
-
 'use strict';
 
-const yargs = require('yargs');
 const FormData = require('form-data');
 const ora = require('ora');
 
@@ -92,16 +89,3 @@ async function main({
 }
 
 module.exports = main;
-
-if (!module.parent) {
-    try {
-        // process args
-        const [bare] = yargs.argv._;
-        const org = yargs.argv.org;
-        const server = yargs.argv.server;
-
-        main({ org, bare, server, type });
-    } catch (err) {
-        console.error(err);
-    }
-}

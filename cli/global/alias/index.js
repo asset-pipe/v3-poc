@@ -1,13 +1,8 @@
-#!/usr/bin/env node
-
 'use strict';
 
-const yargs = require('yargs');
 const FormData = require('form-data');
 const semver = require('semver');
 const ora = require('ora');
-
-const BUCKET = 'asset-pipe-v3';
 
 function sendCommand({ server, org, pkg, version, alias, force = false } = {}) {
     const form = new FormData();
@@ -115,17 +110,3 @@ async function main(
 }
 
 module.exports = main;
-
-if (!module.parent) {
-    try {
-        // process args
-        const [pkg, alias] = yargs.argv._;
-        const org = yargs.argv.org;
-        const force = yargs.argv.force || yargs.argv.f;
-        const server = yargs.argv.server;
-
-        main(org, pkg, alias, server, !!force);
-    } catch (err) {
-        console.error(err);
-    }
-}

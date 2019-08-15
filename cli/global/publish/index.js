@@ -1,8 +1,5 @@
-#!/usr/bin/env node
-
 'use strict';
 
-const yargs = require('yargs');
 const tempDir = require('temp-dir');
 const mkdir = require('make-dir');
 const { writeFileSync, createReadStream } = require('fs');
@@ -19,8 +16,6 @@ const semver = require('semver');
 const ora = require('ora');
 const readPkgUp = require('read-pkg-up');
 const pkgDir = require('pkg-dir');
-
-const BUCKET = 'asset-pipe-v3';
 
 function upload({ server, file, org, pkg, version, force = false } = {}) {
     const form = new FormData();
@@ -218,7 +213,7 @@ async function main(
                 const [moduleName, moduleVersion] = global.split('@');
                 imports[
                     moduleName
-                ] = `https://${BUCKET}.storage.googleapis.com/${org}/pkg/${moduleName}/${moduleVersion}/index.js`;
+                ] = `${server}/${org}/pkg/${moduleName}/${moduleVersion}/index.js`;
             });
         }
 
@@ -308,40 +303,3 @@ async function main(
 }
 
 module.exports = main;
-
-if (!module.parent) {
-    try {
-        // process args
-        const [pkg] = yargs.argv._;
-        const org = yargs.argv.org;
-        let globals = yargs.argv.globals || yargs.argv.g;
-        const force = yargs.argv.force || yargs.argv.f;
-        const server = yargs.argv.server;
-        if (globals) {
-            if (globals === true) {
-                console.error('flag --globals (-g) requires an argument');
-                process.exit();
-            }
-            globals = Array.isArray(globals) ? globals : [globals];
-            globals.forEach(global => {
-                if (!global.includes('@')) {
-                    console.error(
-                        'flag --globals (-g) expects argument of the form <pkg>@<version>. eg. react@16.8.0'
-                    );
-                    process.exit();
-                }
-                // check package exists
-                const cmdout = execSync(`npm show ${global} --loglevel=silent`);
-                if (!cmdout.toString().trim()) {
-                    console.error(
-                        'flag --globals (-g) expects argument to contain valid package name and version eg. react@16.8.0'
-                    );
-                    process.exit();
-                }
-            });
-        }
-        main(pkg, org, server, globals, !!force);
-    } catch (err) {
-        console.error(err);
-    }
-}

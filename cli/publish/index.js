@@ -1,12 +1,7 @@
-#!/usr/bin/env node
-
 'use strict';
 
-const yargs = require('yargs');
 const FormData = require('form-data');
 const fs = require('fs');
-const path = require('path');
-const tar = require('tar');
 const mkdir = require('make-dir');
 const tempDir = require('temp-dir');
 const ora = require('ora');
@@ -18,32 +13,7 @@ const resolve = require('rollup-plugin-node-resolve');
 const { terser } = require('rollup-plugin-terser');
 const esmImportToUrl = require('rollup-plugin-esm-import-to-url');
 const fetch = require('node-fetch');
-
-const runningAsScript = !module.parent;
-
-function resolvePath(pathname) {
-    if (!path.isAbsolute(pathname)) {
-        pathname = path.normalize(`${process.cwd()}/${pathname}`);
-    }
-
-    const { dir, base: file } = path.parse(pathname);
-    return { dir, file, pathname };
-}
-
-// function upload({ server, pkg } = {}) {
-//     const form = new FormData();
-//     form.append('package', fs.createReadStream(pkg));
-
-//     return new Promise((resolve, reject) => {
-//         form.submit(`${server}/upload`, (err, res) => {
-//             if (err) return reject(err);
-
-//             res.once('data', chunk => {
-//                 resolve(chunk.toString());
-//             });
-//         });
-//     });
-// }
+const { resolvePath } = require('../utils');
 
 function upload({ server, file, org, name, version } = {}) {
     const form = new FormData();
@@ -58,7 +28,6 @@ function upload({ server, file, org, name, version } = {}) {
             if (err) return reject(err);
 
             res.once('data', chunk => {
-                console.log(chunk.toString());
                 const str = chunk.toString();
                 if (str) {
                     resolve(JSON.parse(str));
@@ -178,8 +147,6 @@ async function main(metaPath = './assets.json') {
     }
     bundleSpinner.succeed();
 
-    // console.log(file);
-
     const uploadSpinner = ora('Uploading bundle file to server').start();
     let uploadResult = {};
     try {
@@ -207,10 +174,3 @@ async function main(metaPath = './assets.json') {
 }
 
 module.exports = main;
-
-// only do this if run as a cli
-if (runningAsScript) {
-    const argv = yargs.argv;
-    const path = argv.path;
-    main(path);
-}

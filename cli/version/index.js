@@ -1,25 +1,8 @@
-#!/usr/bin/env node
-
 'use strict';
 
-const yargs = require('yargs');
 const semver = require('semver');
-const FormData = require('form-data');
 const fs = require('fs');
-const path = require('path');
-const tar = require('tar');
-const mkdir = require('make-dir');
-
-const runningAsScript = !module.parent;
-
-function resolvePath(pathname) {
-    if (!path.isAbsolute(pathname)) {
-        pathname = path.normalize(`${process.cwd()}/${pathname}`);
-    }
-
-    const { dir, base: file } = path.parse(pathname);
-    return { dir, file, pathname };
-}
+const { resolvePath } = require('../utils');
 
 async function main(semverType, metaPath = './assets.json') {
     const pathToMeta = resolvePath(metaPath).pathname;
@@ -39,11 +22,3 @@ async function main(semverType, metaPath = './assets.json') {
 }
 
 module.exports = main;
-
-// only do this if run as a cli
-if (runningAsScript) {
-    const argv = yargs.argv;
-    const path = argv.path;
-    const commands = argv._;
-    main(commands[0], path);
-}
