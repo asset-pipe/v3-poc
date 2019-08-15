@@ -1,5 +1,5 @@
 {
-    "name": "asset-pipe-v3-poc",
+    "name": "@asset-pipe/client",
     "version": "1.0.0",
     "description": "",
     "main": "index.js",

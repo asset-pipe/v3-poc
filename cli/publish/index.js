@@ -58,7 +58,13 @@ function upload({ server, file, org, name, version } = {}) {
             if (err) return reject(err);
 
             res.once('data', chunk => {
-                resolve(JSON.parse(chunk.toString()));
+                console.log(chunk.toString());
+                const str = chunk.toString();
+                if (str) {
+                    resolve(JSON.parse(str));
+                } else {
+                    resolve();
+                }
             });
         });
     });
