@@ -108,3 +108,30 @@ test('delete alias', async t => {
 
     t.end();
 });
+
+test('put import map value', async t => {
+    const { body } = await supertest(app)
+        .put('/import-map/finn/js/react')
+        .field('data', JSON.stringify({ value: 'http://something.com' }));
+
+    t.equal(body.success, true);
+    t.equal(body.url, 'http://localhost:4001/import-map/finn/js');
+    t.end();
+});
+
+test('get import map file', async t => {
+    const { text } = await supertest(app).get('/import-map/finn/js');
+    t.equal(
+        text,
+        'Moved Permanently. Redirecting to https://asset-pipe-v3.storage.googleapis.com/finn/js/import-map.json'
+    );
+    t.end();
+});
+
+test('delete import map value', async t => {
+    const { body } = await supertest(app).delete('/import-map/finn/js/react');
+
+    t.equal(body.success, true);
+    t.equal(body.url, 'http://localhost:4001/import-map/finn/js');
+    t.end();
+});

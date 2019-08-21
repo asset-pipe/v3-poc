@@ -1,15 +1,18 @@
 'use strict';
 
 const multer = require('multer');
+const { Storage } = require('@google-cloud/storage');
 
 const upload = multer({ dest: 'tmp/' });
+const storage = new Storage();
 
 module.exports.middleware = () =>
     upload.fields([{ name: 'value', maxCount: 1 }]);
 
 module.exports.handler = options => async (req, res) => {
+    const { BUCKET, HOST, PORT } = options;
     const { org, type, bare } = req.params;
-    const { value: pkg } = req.body;
+    const { value: val } = req.body;
 
     // TODO: input validation
 
@@ -21,7 +24,6 @@ module.exports.handler = options => async (req, res) => {
         .exists();
 
     if (exists) {
-        // get import map if exists
         const [contents] = await storage
             .bucket(BUCKET)
             .file(`${org}/${type}/import-map.json`)
@@ -29,25 +31,8 @@ module.exports.handler = options => async (req, res) => {
         importMap = JSON.parse(contents);
     }
 
-    // convert pkg into correct value if necessary
-    let val = pkg;
-    if (pkg.includes('@')) {
-        const [left, right] = pkg.trim().split('@');
-        if (semver.valid(right)) {
-            // specific version
-            val = `${HOST}:${PORT}/${org}/pkg/${left}/${right}/index.${type}`;
-            // TODO: check for existence
-        } else {
-            // assume an alias
-            val = `${HOST}:${PORT}/${org}/alias/${left}/${right}/index.${type}`;
-            // TODO: check for existence
-        }
-    }
-
-    // set imports[bare] = value
     importMap.imports[bare] = val;
 
-    // save import map
     await storage
         .bucket(BUCKET)
         .file(`${org}/${type}/import-map.json`)
@@ -55,6 +40,6 @@ module.exports.handler = options => async (req, res) => {
 
     res.send({
         success: true,
-        url: `${HOST}:${PORT}/${org}/${type}/import-map.json`,
+        url: `${HOST}:${PORT}/import-map/${org}/${type}`,
     });
 };

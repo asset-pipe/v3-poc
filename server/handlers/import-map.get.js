@@ -3,6 +3,7 @@
 module.exports.middleware = () => [];
 
 module.exports.handler = options => (req, res) => {
+    const { BUCKET } = options;
     const { org, type } = req.params;
 
     if (!org || !type) {
