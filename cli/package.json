@@ -15,7 +15,9 @@
     "dependencies": {
         "@babel/core": "^7.5.4",
         "@babel/preset-env": "^7.5.4",
+        "@hapi/joi": "^15.1.1",
         "form-data": "^2.4.0",
+        "joi-extension-semver": "^3.0.0",
         "make-dir": "^3.0.0",
         "node-fetch": "^2.6.0",
         "ora": "^3.4.0",
