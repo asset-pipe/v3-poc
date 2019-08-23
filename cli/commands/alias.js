@@ -21,6 +21,12 @@ async function command(subcommands, args) {
         loadAssetsFileSpinner.fail(
             'Unable to load assets.json. Run "asset-pipe init" to generate'
         );
+
+        console.log('==========');
+        console.error(err);
+        console.log('==========');
+
+        process.exit();
     }
     loadAssetsFileSpinner.succeed();
 

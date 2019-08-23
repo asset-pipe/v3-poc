@@ -8,6 +8,7 @@ const subtype = require('./subtype');
 const type = require('./type');
 const version = require('./alias');
 const semverType = require('./semver-type');
+const uriOrVersionOrAlias = require('./uri-or-version-or-alias');
 
 module.exports = {
     alias,
@@ -18,4 +19,5 @@ module.exports = {
     type,
     version,
     semverType,
+    uriOrVersionOrAlias,
 };

@@ -1,3 +1,3 @@
 const Joi = require('@hapi/joi');
 
-module.exports = Joi.string();
+module.exports = Joi.string().required();
