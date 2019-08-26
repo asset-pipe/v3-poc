@@ -2,7 +2,8 @@
 
 const fetch = require('node-fetch');
 const FormData = require('form-data');
-const { resolvePath } = require('./resolve-path');
+const { createReadStream } = require('fs');
+const resolvePath = require('./resolve-path');
 
 async function sendCommand({
     method = 'POST',
@@ -18,7 +19,7 @@ async function sendCommand({
     }
 
     if (file) {
-        form.append('file', createReadStream(resolvePath(file)));
+        form.append('file', createReadStream(resolvePath(file).pathname));
     }
 
     try {
