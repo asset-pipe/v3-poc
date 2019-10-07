@@ -1,0 +1,168 @@
+'use strict';
+
+const { BASE_ALIAS, BASE_ASSETS } = require('../lib/utils/globals');
+const assetPost = require('../lib/handlers/asset.post');
+const assetGet = require('../lib/handlers/asset.get');
+const aliasPut = require('../lib/handlers/alias.put');
+const aliasGet = require('../lib/handlers/alias.get');
+const aliasDel = require('../lib/handlers/alias.delete');
+
+const fastify = require('fastify');
+const SinkFS = require('../lib/sinks/fs');
+
+const sink = new SinkFS();
+
+const app = fastify({
+    logger: true
+})
+
+const opts = {
+    schema: {
+        /*
+        response: {
+            200: {
+                type: 'object',
+                properties: {
+                    hello: { type: 'string' }
+                }
+            }
+        },
+        */
+        params: assetPost.params
+    }
+};
+/*
+app.get('/a/:org/:type/:name/:alias', opts, async (request, reply) => {
+    console.log(request.params);
+    return { hello: 'world' };
+});
+
+app.put('/a/:org/:type/:name/:alias', opts, async (request, reply) => {
+    return { hello: 'world' };
+});
+
+app.delete('/a/:org/:type/:name/:alias', opts, async (request, reply) => {
+    return { hello: 'world' };
+});
+*/
+app.get('/import-map/:org/:type', opts, async (request, reply) => {
+    return { hello: 'world' };
+});
+
+app.put('/import-map/:org/:type/:key', opts, async (request, reply) => {
+    return { hello: 'world' };
+});
+
+app.delete('/import-map/:org/:type/:key', opts, async (request, reply) => {
+    return { hello: 'world' };
+});
+
+
+
+process.env.GOOGLE_APPLICATION_CREDENTIALS = __dirname + '/asset-pipe-35b0aec570a5.json';
+
+// Handle multipart upload
+const _multipart = Symbol('multipart')
+
+function setMultipart (req, done) {
+    req[_multipart] = true;
+    done();
+}
+app.addContentTypeParser('multipart', setMultipart)
+
+// Error handling
+app.setErrorHandler((error, request, reply) => {
+    app.log.error(error);
+    reply.code(404).send('Not found');
+});
+
+
+// curl -X POST -i -F field1=bar -F field2=foo -F filedata=@large.tar http://localhost:4001/finn/assets/js/my-module/8.8.8
+
+app.post(`/:org${BASE_ASSETS}/:type/:name/:version`, opts, async (request, reply) => {
+    const stream =  await assetPost.handler(sink,
+        request.req,
+        request.params.org,
+        request.params.type,
+        request.params.name,
+        request.params.version,
+    );
+
+    reply.type(stream.mimeType);
+    reply.send(stream);
+});
+
+// curl http://localhost:4001/finn/assets/js/my-module/8.8.8/foo
+// curl http://localhost:4001/finn/assets/js/my-module/8.8.8/lang.js
+// curl -I -X GET http://localhost:4001/finn/assets/js/my-module/8.8.8/lang.js
+
+app.get(`/:org${BASE_ASSETS}/:type/:name/:version/*`, opts, async (request, reply) => {
+    const stream = await assetGet.handler(sink,
+        request.req,
+        request.params.org,
+        request.params.type,
+        request.params.name,
+        request.params.version,
+        request.params['*'],
+    );
+
+    reply.type(stream.mimeType);
+    reply.send(stream);
+});
+
+// curl -X PUT -i -F version=8.8.8 -F foo=bar http://localhost:4001/finn/alias/js/my-module
+
+app.put(`/:org${BASE_ALIAS}/:type/:name`, opts, async (request, reply) => {
+    const stream = await aliasPut.handler(sink,
+        request.req,
+        request.params.org,
+        request.params.type,
+        request.params.name,
+    );
+
+    reply.type(stream.mimeType);
+    reply.send(stream);
+});
+
+// curl http://localhost:4001/finn/alias/js/my-module/8/lang.js
+// curl -L http://localhost:4001/finn/alias/js/my-module/8/lang.js
+// curl -I -X GET http://localhost:4001/finn/alias/js/my-module/8/lang.js
+
+app.get(`/:org${BASE_ALIAS}/:type/:name/:alias/*`, opts, async (request, reply) => {
+    const stream = await aliasGet.handler(
+        sink,
+        request.req,
+        request.params.org,
+        request.params.type,
+        request.params.name,
+        request.params.alias,
+        request.params['*'],
+    );
+
+    reply.type(stream.mimeType);
+    reply.code(stream.statusCode);
+    reply.redirect(stream.location);
+});
+
+// curl -X DELETE http://localhost:4001/finn/alias/js/my-module/8
+
+app.delete(`/:org${BASE_ALIAS}/:type/:name/:alias`, opts, async (request, reply) => {
+    const stream = await aliasDel.handler(
+        sink,
+        request.req,
+        request.params.org,
+        request.params.type,
+        request.params.name,
+        request.params.alias,
+    );
+
+    reply.type(stream.mimeType);
+    reply.send(stream);
+});
+
+app.listen(4001, (err, address) => {
+    if (err) {
+        app.log.error(err)
+        process.exit(1)
+    }
+});
