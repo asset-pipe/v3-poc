@@ -1,27 +1,8 @@
 'use strict';
 
-const { Writable, pipeline } = require('stream');
 const HttpOutgoing = require('../classes/http-outgoing');
 const Alias = require('../classes/alias');
-
-const collector = (input) => {
-    return new Promise((resolve, reject) => {
-        const buffer = [];
-
-        const stream = new Writable({
-            objectMode: false,
-            write(chunk, encoding, callback) {
-                buffer.push(chunk);
-                callback();
-            },
-        });
-
-        pipeline(input, stream, (error) => {
-            if (error) return reject(error);
-            resolve(buffer.join().toString());
-        });
-    });
-};
+const utils = require('../utils/utils');
 
 const params = {
     type: 'object',
@@ -66,11 +47,13 @@ const handler = (sink, req, org, type, name, alias, extra) => {
 
     return new Promise(async (resolve, reject) => {
         const path = Alias.buildPath(org, type, name, alias);
-        const stream = sink.read(path);
 
-        // TODO; try/catch
-        const result = await collector(stream);
-        const obj = JSON.parse(result);
+        let obj = {};
+        try {
+            obj = await utils.fetchAsJSON(sink, path);
+        } catch(error) {
+            // TODO; log error?
+        }
 
         const location = Alias.buildPathname(obj.org, obj.type, obj.name, obj.version, extra);
 

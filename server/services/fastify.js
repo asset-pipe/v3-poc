@@ -1,11 +1,14 @@
 'use strict';
 
-const { BASE_ALIAS, BASE_ASSETS } = require('../lib/utils/globals');
+const { BASE_ALIAS, BASE_ASSETS, BASE_IMPORT_MAPS } = require('../lib/utils/globals');
 const assetPost = require('../lib/handlers/asset.post');
 const assetGet = require('../lib/handlers/asset.get');
 const aliasPut = require('../lib/handlers/alias.put');
 const aliasGet = require('../lib/handlers/alias.get');
 const aliasDel = require('../lib/handlers/alias.delete');
+const mapPut = require('../lib/handlers/import-map.put');
+const mapGet = require('../lib/handlers/import-map.get');
+const mapDel = require('../lib/handlers/import-map.delete');
 
 const fastify = require('fastify');
 const SinkFS = require('../lib/sinks/fs');
@@ -31,33 +34,6 @@ const opts = {
         params: assetPost.params
     }
 };
-/*
-app.get('/a/:org/:type/:name/:alias', opts, async (request, reply) => {
-    console.log(request.params);
-    return { hello: 'world' };
-});
-
-app.put('/a/:org/:type/:name/:alias', opts, async (request, reply) => {
-    return { hello: 'world' };
-});
-
-app.delete('/a/:org/:type/:name/:alias', opts, async (request, reply) => {
-    return { hello: 'world' };
-});
-*/
-app.get('/import-map/:org/:type', opts, async (request, reply) => {
-    return { hello: 'world' };
-});
-
-app.put('/import-map/:org/:type/:key', opts, async (request, reply) => {
-    return { hello: 'world' };
-});
-
-app.delete('/import-map/:org/:type/:key', opts, async (request, reply) => {
-    return { hello: 'world' };
-});
-
-
 
 process.env.GOOGLE_APPLICATION_CREDENTIALS = __dirname + '/asset-pipe-35b0aec570a5.json';
 
@@ -157,6 +133,52 @@ app.delete(`/:org${BASE_ALIAS}/:type/:name/:alias`, opts, async (request, reply)
     );
 
     reply.type(stream.mimeType);
+    reply.send(stream);
+});
+
+// curl -X PUT -i -F specifier=lit-html -F address=http://foo.com http://localhost:4001/finn/import-maps/js/global-map
+
+app.put(`/:org${BASE_IMPORT_MAPS}/:type/:name`, opts, async (request, reply) => {
+    const stream = await mapPut.handler(
+        sink,
+        request.req,
+        request.params.org,
+        request.params.type,
+        request.params.name,
+    );
+
+    reply.type(stream.mimeType);
+    reply.send(stream);
+});
+
+// curl http://localhost:4001/finn/import-maps/js/global-map
+
+app.get(`/:org${BASE_IMPORT_MAPS}/:type/:name`, opts, async (request, reply) => {
+    const stream = await mapGet.handler(
+        sink,
+        request.req,
+        request.params.org,
+        request.params.type,
+        request.params.name,
+    );
+
+    reply.type(stream.mimeType);
+    reply.send(stream);
+});
+
+// curl -X DELETE http://localhost:4001/finn/import-maps/js/global-map
+
+app.delete(`/:org${BASE_IMPORT_MAPS}/:type/:name`, opts, async (request, reply) => {
+    const stream = await mapDel.handler(
+        sink,
+        request.req,
+        request.params.org,
+        request.params.type,
+        request.params.name,
+    );
+
+    reply.type(stream.mimeType);
+    reply.code(stream.statusCode);
     reply.send(stream);
 });
 

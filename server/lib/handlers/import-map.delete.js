@@ -1,32 +1,57 @@
 'use strict';
 
-const { Storage } = require('@google-cloud/storage');
+const HttpOutgoing = require('../classes/http-outgoing');
+const ImportMap = require('../classes/import-map');
 
-const storage = new Storage();
+const params = {
+    type: 'object',
+    properties: {
+        alias: {
+          type: 'string',
+          minLength: 1,
+          maxLength: 64,
+          pattern: "^[a-zA-Z0-9_-]*$"
+        },
+        type: { type: 'string' },
+        name: { type: 'string' },
+        org: { type: 'string' },
+    }
+};
+module.exports.params = params;
 
-module.exports.middleware = () => [];
+const handler = (sink, req, org, type, name) => {
+    if (typeof org !== 'string' || org === '') {
+        throw new TypeError(
+            ':org is a required url parameter and must be a string'
+        );
+    }
 
-module.exports.handler = options => async (req, res) => {
-    const { BUCKET, HOST, PORT } = options;
-    const { org, type, key } = req.params;
+    if (typeof type !== 'string' || type === '') {
+        throw new TypeError(
+            ':type is a required url parameter and must be a string'
+        );
+    }
 
-    // TODO: input validation
+    if (typeof name !== 'string' || name === '') {
+        throw new TypeError(
+            ':name is a required url parameter and must be a string'
+        );
+    }
 
-    const [contents] = await storage
-        .bucket(BUCKET)
-        .file(`${org}/${type}/import-map.json`)
-        .download();
-    const importMap = JSON.parse(contents);
+    return new Promise(async (resolve, reject) => {
+        const path = ImportMap.buildPath(org, type, name);
 
-    delete importMap.imports[key];
+        // TODO; try/catch
+        const result = await sink.delete(path);
 
-    await storage
-        .bucket(BUCKET)
-        .file(`${org}/${type}/import-map.json`)
-        .save(JSON.stringify(importMap, null, 2));
+        console.log(result);
 
-    res.send({
-        success: true,
-        url: `${HOST}:${PORT}/import-map/${org}/${type}`,
+        const outgoing = new HttpOutgoing();
+        outgoing.mimeType = 'plain/text';
+        outgoing.statusCode = 204;
+        outgoing.push(null);
+
+        resolve(outgoing);
     });
 };
+module.exports.handler = handler;

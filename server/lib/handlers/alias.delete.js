@@ -51,10 +51,8 @@ const handler = (sink, req, org, type, name, alias) => {
         const result = await sink.delete(path);
 
         const outgoing = new HttpOutgoing();
-        outgoing.mimeType = 'application/json';
-        outgoing.statusCode = 200;
-
-        outgoing.push(Buffer.from(`${JSON.stringify({success: true})}\n`));
+        outgoing.mimeType = 'plain/text';
+        outgoing.statusCode = 204;
         outgoing.push(null);
 
         resolve(outgoing);
