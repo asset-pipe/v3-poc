@@ -194,3 +194,123 @@ curl -X DELETE http://localhost:4001/finn/assets/js/lit-html/8
 ```
 
 ## Import Maps
+
+An import map hold a mapping or a set of mappings between ECMA Script Module (ESM) bare imports a alias of a package.
+
+### Method: `GET`
+
+Retrieves a import map from the service.
+
+```bash
+https://:assetServerUrl:port/:org/import-maps/:type/:name
+```
+
+URL parameters:
+
+* `:org` is the name of your organisation.
+* `:type` is the type of package the import map is for, can be `js` or `css`.
+* `:name` is the name of the import map.
+
+Status codes:
+
+* `200` if alias exist
+* `404` if alias is not found
+
+Example:
+
+```bash
+curl http://localhost:4001/finn/alias/js/my-mapping
+```
+
+### Method: `PUT`
+
+Puts a new import map at the service.
+
+```bash
+https://:assetServerUrl:port/:org/import-maps/:type/:name
+```
+
+URL parameters:
+
+* `:org` is the name of your organisation.
+* `:type` is the type of package the import map is for, can be `js` or `css`.
+* `:name` is the name of the import map.
+
+Form parameters:
+
+* `:specifier` the specifier of an import in the import map
+* `:address` the address of an import in the import map
+
+Status codes:
+
+* `201` if import map is successfully created
+* `400` if validation in URL parameters or form fields fails
+* `401` if user is not authorized
+* `409` if import map already exist
+* `502` if import map could not be altered by the sink
+
+Example:
+
+```bash
+curl -X PUT -i -F specifier=lit-html -F address=http://localhost:4001/finn/assets/js/lit-html/8 http://localhost:4001/finn/import-maps/js/my-mapping
+```
+
+### Method: `DELETE`
+
+Deletes an existing import map from the service.
+
+```bash
+https://:assetServerUrl:port/:org/import-maps/:type/:name
+```
+
+URL parameters:
+
+* `:org` is the name of your organisation.
+* `:type` is the type of package the import map is for, can be `js` or `css`.
+* `:name` is the name of the import map.
+
+Status codes:
+
+* `204` if import map is successfully deleted
+* `400` if validation in URL parameters or form fields fails
+* `401` if user is not authorized
+* `404` if import map does not exist
+* `502` if import map could not be altered by the sink
+
+Example:
+
+```bash
+curl -X DELETE http://localhost:4001/finn/import-maps/js/my-mapping
+```
+
+### Method: `PATCH`
+
+Upates the content of an existing import map at the service.
+
+```bash
+https://:assetServerUrl:port/:org/import-maps/:type/:name
+```
+
+URL parameters:
+
+* `:org` is the name of your organisation.
+* `:type` is the type of package the import map is for, can be `js` or `css`.
+* `:name` is the name of the import map.
+
+Form parameters:
+
+* `:specifier` the specifier of an import in the import map
+* `:address` the address of an import in the import map (if empty, import is removed)
+
+Status codes:
+
+* `201` if import map is successfully updated
+* `400` if validation in URL parameters or form fields fails
+* `401` if user is not authorized
+* `404` if import map does not exist
+* `502` if import map could not be altered by the sink
+
+Example:
+
+```bash
+curl -X PATCH -i -F specifier=lit-element -F address=http://localhost:4001/finn/assets/js/lit-element/3 http://localhost:4001/finn/import-maps/js/my-mapping
