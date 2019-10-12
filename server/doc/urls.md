@@ -202,13 +202,12 @@ An import map hold a mapping or a set of mappings between ECMA Script Module (ES
 Retrieves a import map from the service.
 
 ```bash
-https://:assetServerUrl:port/:org/import-maps/:type/:name
+https://:assetServerUrl:port/:org/import-maps/:name
 ```
 
 URL parameters:
 
 * `:org` is the name of your organisation.
-* `:type` is the type of package the import map is for, can be `js` or `css`.
 * `:name` is the name of the import map.
 
 Status codes:
@@ -219,7 +218,7 @@ Status codes:
 Example:
 
 ```bash
-curl http://localhost:4001/finn/alias/js/my-mapping
+curl http://localhost:4001/finn/alias/my-mapping
 ```
 
 ### Method: `PUT`
@@ -227,13 +226,12 @@ curl http://localhost:4001/finn/alias/js/my-mapping
 Puts a new import map at the service.
 
 ```bash
-https://:assetServerUrl:port/:org/import-maps/:type/:name
+https://:assetServerUrl:port/:org/import-maps/:name
 ```
 
 URL parameters:
 
 * `:org` is the name of your organisation.
-* `:type` is the type of package the import map is for, can be `js` or `css`.
 * `:name` is the name of the import map.
 
 Form parameters:
@@ -252,7 +250,7 @@ Status codes:
 Example:
 
 ```bash
-curl -X PUT -i -F specifier=lit-html -F address=http://localhost:4001/finn/assets/js/lit-html/8 http://localhost:4001/finn/import-maps/js/my-mapping
+curl -X PUT -i -F specifier=lit-html -F address=http://localhost:4001/finn/assets/js/lit-html/8 http://localhost:4001/finn/import-maps/my-mapping
 ```
 
 ### Method: `DELETE`
@@ -260,13 +258,12 @@ curl -X PUT -i -F specifier=lit-html -F address=http://localhost:4001/finn/asset
 Deletes an existing import map from the service.
 
 ```bash
-https://:assetServerUrl:port/:org/import-maps/:type/:name
+https://:assetServerUrl:port/:org/import-maps/:name
 ```
 
 URL parameters:
 
 * `:org` is the name of your organisation.
-* `:type` is the type of package the import map is for, can be `js` or `css`.
 * `:name` is the name of the import map.
 
 Status codes:
@@ -280,7 +277,7 @@ Status codes:
 Example:
 
 ```bash
-curl -X DELETE http://localhost:4001/finn/import-maps/js/my-mapping
+curl -X DELETE http://localhost:4001/finn/import-maps/my-mapping
 ```
 
 ### Method: `PATCH`
@@ -288,13 +285,12 @@ curl -X DELETE http://localhost:4001/finn/import-maps/js/my-mapping
 Upates the content of an existing import map at the service.
 
 ```bash
-https://:assetServerUrl:port/:org/import-maps/:type/:name
+https://:assetServerUrl:port/:org/import-maps/:name
 ```
 
 URL parameters:
 
 * `:org` is the name of your organisation.
-* `:type` is the type of package the import map is for, can be `js` or `css`.
 * `:name` is the name of the import map.
 
 Form parameters:
@@ -313,4 +309,4 @@ Status codes:
 Example:
 
 ```bash
-curl -X PATCH -i -F specifier=lit-element -F address=http://localhost:4001/finn/assets/js/lit-element/3 http://localhost:4001/finn/import-maps/js/my-mapping
+curl -X PATCH -i -F specifier=lit-element -F address=http://localhost:4001/finn/assets/js/lit-element/3 http://localhost:4001/finn/import-maps/my-mapping
