@@ -195,7 +195,7 @@ curl -X DELETE http://localhost:4001/finn/assets/js/lit-html/8
 
 ## Import Maps
 
-An import map hold a mapping or a set of mappings between ECMA Script Module (ESM) bare imports a alias of a package.
+An import map hold a mapping or a set of mappings between ECMA Script Module (ESM) bare imports a alias of a package. import maps specification is defined here: https://github.com/WICG/import-maps
 
 ### Method: `GET`
 
