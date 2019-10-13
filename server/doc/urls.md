@@ -16,10 +16,10 @@ https://:assetServerUrl:port/:org/assets/:type/:name/:version/:extras
 
 URL parameters:
 
-* `:org` is the name of your organisation.
-* `:type` is the type of the package, can be `js` or `css`.
-* `:name` is the name of the package.
-* `:version` is the version of the package.
+* `:org` is the name of your organisation. Validator: [`^[a-zA-Z0-9_-]+$`](https://regexper.com/#%5E%5Ba-zA-Z0-9_-%5D%2B%24).
+* `:type` is the type of the package, can be `js` or `css`. Validator: [\bcss\b|\bjs\b](https://regexper.com/#%5Cbcss%5Cb%7C%5Cbjs%5Cb).
+* `:name` is the name of the package. Validator: Comply with [npm package names](https://github.com/npm/validate-npm-package-name).
+* `:version` is the version of the package. Validator: Comply with [semver validation regex](https://semver.org/).
 * `:extras` whildcard pathname to any file in the package
 
 Status codes:
@@ -44,10 +44,10 @@ https://:assetServerUrl:port/:org/assets/:type/:name/:version
 
 URL parameters:
 
-* `:org` is the name of your organisation.
-* `:type` is the type of the package, can be `js` or `css`.
-* `:name` is the name of the package.
-* `:version` is the version of the package.
+* `:org` is the name of your organisation. Validator: [`^[a-zA-Z0-9_-]+$`](https://regexper.com/#%5E%5Ba-zA-Z0-9_-%5D%2B%24).
+* `:type` is the type of the package, can be `js` or `css`. Validator: [\bcss\b|\bjs\b](https://regexper.com/#%5Cbcss%5Cb%7C%5Cbjs%5Cb).
+* `:name` is the name of the package. Validator: Comply with [npm package names](https://github.com/npm/validate-npm-package-name).
+* `:version` is the version of the package. Validator: Comply with [semver validation regex](https://semver.org/).
 
 Form parameters:
 
@@ -82,10 +82,10 @@ https://:assetServerUrl:port/:org/alias/:type/:name/:alias/:extras
 
 URL parameters:
 
-* `:org` is the name of your organisation.
-* `:type` is the type of the package, can be `js` or `css`.
-* `:name` is the name of the package.
-* `:alias` is the major version of the package.
+* `:org` is the name of your organisation. Validator: [`^[a-zA-Z0-9_-]+$`](https://regexper.com/#%5E%5Ba-zA-Z0-9_-%5D%2B%24).
+* `:type` is the type of the package, can be `js` or `css`. Validator: [\bcss\b|\bjs\b](https://regexper.com/#%5Cbcss%5Cb%7C%5Cbjs%5Cb).
+* `:name` is the name of the package. Validator: Comply with [npm package names](https://github.com/npm/validate-npm-package-name).
+* `:alias` is the major version of the package. Validator: Comply with [semver validation regex](https://semver.org/).
 * `:extras` whildcard pathname to any file in the package
 
 Status codes:
@@ -110,10 +110,10 @@ https://:assetServerUrl:port/:org/alias/:type/:name/:alias
 
 URL parameters:
 
-* `:org` is the name of your organisation.
-* `:type` is the type of the package, can be `js` or `css`.
-* `:name` is the name of the package.
-* `:alias` is the major version of the package.
+* `:org` is the name of your organisation. Validator: [`^[a-zA-Z0-9_-]+$`](https://regexper.com/#%5E%5Ba-zA-Z0-9_-%5D%2B%24).
+* `:type` is the type of the package, can be `js` or `css`. Validator: [\bcss\b|\bjs\b](https://regexper.com/#%5Cbcss%5Cb%7C%5Cbjs%5Cb).
+* `:name` is the name of the package. Validator: Comply with [npm package names](https://github.com/npm/validate-npm-package-name).
+* `:alias` is the major version of the package. Validator: Comply with [semver validation regex](https://semver.org/).
 
 Form parameters:
 
@@ -143,10 +143,10 @@ https://:assetServerUrl:port/:org/alias/:type/:name/:alias
 
 URL parameters:
 
-* `:org` is the name of your organisation.
-* `:type` is the type of the package, can be `js` or `css`.
-* `:name` is the name of the package.
-* `:alias` is the major version of the package.
+* `:org` is the name of your organisation. Validator: [`^[a-zA-Z0-9_-]+$`](https://regexper.com/#%5E%5Ba-zA-Z0-9_-%5D%2B%24).
+* `:type` is the type of the package, can be `js` or `css`. Validator: [\bcss\b|\bjs\b](https://regexper.com/#%5Cbcss%5Cb%7C%5Cbjs%5Cb).
+* `:name` is the name of the package. Validator: Comply with [npm package names](https://github.com/npm/validate-npm-package-name).
+* `:alias` is the major version of the package. Validator: Comply with [semver validation regex](https://semver.org/).
 
 Form parameters:
 
@@ -176,10 +176,10 @@ https://:assetServerUrl:port/:org/alias/:type/:name/:alias
 
 URL parameters:
 
-* `:org` is the name of your organisation.
-* `:type` is the type of the package, can be `js` or `css`.
-* `:name` is the name of the package.
-* `:alias` is the major version of the package.
+* `:org` is the name of your organisation. Validator: [`^[a-zA-Z0-9_-]+$`](https://regexper.com/#%5E%5Ba-zA-Z0-9_-%5D%2B%24).
+* `:type` is the type of the package, can be `js` or `css`. Validator: [\bcss\b|\bjs\b](https://regexper.com/#%5Cbcss%5Cb%7C%5Cbjs%5Cb).
+* `:name` is the name of the package. Validator: Comply with [npm package names](https://github.com/npm/validate-npm-package-name).
+* `:alias` is the major version of the package. Validator: Comply with [semver validation regex](https://semver.org/).
 
 Status codes:
 
@@ -209,13 +209,13 @@ https://:assetServerUrl:port/:org/import-maps/:name
 
 URL parameters:
 
-* `:org` is the name of your organisation.
-* `:name` is the name of the import map.
+* `:org` is the name of your organisation. Validator: [`^[a-zA-Z0-9_-]+$`](https://regexper.com/#%5E%5Ba-zA-Z0-9_-%5D%2B%24).
+* `:name` is the name of the import map. Validator: Comply with [npm package names](https://github.com/npm/validate-npm-package-name).
 
 Status codes:
 
-* `200` if alias exist
-* `404` if alias is not found
+* `200` if import map exist
+* `404` if import map is not found
 
 Example:
 
@@ -233,8 +233,8 @@ https://:assetServerUrl:port/:org/import-maps/:name
 
 URL parameters:
 
-* `:org` is the name of your organisation.
-* `:name` is the name of the import map.
+* `:org` is the name of your organisation. Validator: [`^[a-zA-Z0-9_-]+$`](https://regexper.com/#%5E%5Ba-zA-Z0-9_-%5D%2B%24).
+* `:name` is the name of the import map. Validator: Comply with [npm package names](https://github.com/npm/validate-npm-package-name).
 
 Form parameters:
 
@@ -265,8 +265,8 @@ https://:assetServerUrl:port/:org/import-maps/:name
 
 URL parameters:
 
-* `:org` is the name of your organisation.
-* `:name` is the name of the import map.
+* `:org` is the name of your organisation. Validator: [`^[a-zA-Z0-9_-]+$`](https://regexper.com/#%5E%5Ba-zA-Z0-9_-%5D%2B%24).
+* `:name` is the name of the import map. Validator: Comply with [npm package names](https://github.com/npm/validate-npm-package-name).
 
 Status codes:
 
@@ -292,8 +292,8 @@ https://:assetServerUrl:port/:org/import-maps/:name
 
 URL parameters:
 
-* `:org` is the name of your organisation.
-* `:name` is the name of the import map.
+* `:org` is the name of your organisation. Validator: [`^[a-zA-Z0-9_-]+$`](https://regexper.com/#%5E%5Ba-zA-Z0-9_-%5D%2B%24).
+* `:name` is the name of the import map. Validator: Comply with [npm package names](https://github.com/npm/validate-npm-package-name).
 
 Form parameters:
 
