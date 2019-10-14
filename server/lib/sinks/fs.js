@@ -3,6 +3,7 @@
 const rimraf = require('rimraf');
 const path = require('path');
 const fs = require('fs');
+const os = require('os');
 
 /**
  * A sink for persisting files to local file system
@@ -12,12 +13,12 @@ const fs = require('fs');
 
 class SinkFS {
     constructor() {
-        this._dir = '/home/trygve/Dev/asset-pipe/v3-poc/server/tmp';
+        this._dir = `${os.tmpdir()}/asset-pipe`;
     }
 
     async write(filePath) {
         const pathname = path.join(this._dir, filePath);
-        const dir = path.dirname(pathname)
+        const dir = path.dirname(pathname);
 
         await fs.promises.mkdir(dir, {
             recursive: true,
@@ -39,7 +40,7 @@ class SinkFS {
 
     delete(filePath) {
         const pathname = path.join(this._dir, filePath);
-        const dir = path.dirname(pathname)
+        const dir = path.dirname(pathname);
 
         return new Promise((resolve, reject) => {
             rimraf(dir, error => {
