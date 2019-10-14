@@ -61,6 +61,7 @@ const handler = (sink, req, org, type, name, version, extra) => {
             stream.pipe(outgoing);
 
             resolve(outgoing);
+
             return;
         }
 

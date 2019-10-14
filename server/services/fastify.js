@@ -11,9 +11,11 @@ const mapGet = require('../lib/handlers/import-map.get');
 const mapDel = require('../lib/handlers/import-map.delete');
 
 const fastify = require('fastify');
-const SinkFS = require('../lib/sinks/fs');
+// const SinkFS = require('../lib/sinks/fs');
+const SinkGCS = require('../lib/sinks/gcs');
 
-const sink = new SinkFS();
+// const sink = new SinkFS();
+const sink = new SinkGCS();
 
 const app = fastify({
     logger: true
@@ -35,7 +37,9 @@ const opts = {
     }
 };
 
-process.env.GOOGLE_APPLICATION_CREDENTIALS = __dirname + '/asset-pipe-35b0aec570a5.json';
+const path = require('path');
+const cred = path.join(__dirname, '../gcloud.json');
+process.env.GOOGLE_APPLICATION_CREDENTIALS = cred;
 
 // Handle multipart upload
 const _multipart = Symbol('multipart')
@@ -71,6 +75,8 @@ app.post(`/:org${BASE_ASSETS}/:type/:name/:version`, opts, async (request, reply
 // curl http://localhost:4001/finn/assets/js/my-module/8.8.8/foo
 // curl http://localhost:4001/finn/assets/js/my-module/8.8.8/lang.js
 // curl -I -X GET http://localhost:4001/finn/assets/js/my-module/8.8.8/lang.js
+
+// TODO: Handle when method is requested without a body (curl -I .....)
 
 app.get(`/:org${BASE_ASSETS}/:type/:name/:version/*`, opts, async (request, reply) => {
     const stream = await assetGet.handler(sink,

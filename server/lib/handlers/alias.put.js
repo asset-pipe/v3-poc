@@ -5,6 +5,7 @@ const HttpOutgoing = require('../classes/http-outgoing');
 const { Duplex } = require('stream');
 const Busboy = require('busboy');
 const Alias = require('../classes/alias');
+const utils = require('../utils/utils');
 
 const Parser = class Parser extends Duplex {
     constructor(sink, incoming) {
@@ -42,14 +43,11 @@ const Parser = class Parser extends Duplex {
         });
 
         this.parser.on('finish', async () => {
-            const buff = Buffer.from(`${JSON.stringify(this.alias)}\n`);
-
-            // Write file to sink
-            const writer = await this.sink.write(this.alias.path);
-            writer.write(buff);
+            // TODO: try/catch and error handling
+            const buffer = await utils.writeJSON(sink, this.alias.path, this.alias, 'application/json');
 
             // Terminate the Duplex stream
-            this.push(buff);
+            this.push(buffer);
             this.push(null);
         });
     }

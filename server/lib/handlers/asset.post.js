@@ -49,10 +49,11 @@ const Parser = class Parser extends Duplex {
                         return;
                     }
 
-                    const writer = await sink.write(asset.path);
+                    const writer = await sink.write(asset.path, asset.type);
 
                     pipeline(entry, writer, error => {
                         if (error) {
+                            console.log(error)
                             asset.errored = true;
                         };
                     });

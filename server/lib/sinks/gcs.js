@@ -1,7 +1,6 @@
 'use strict';
 
 const { Storage } = require('@google-cloud/storage');
-const File = require('../classes/file');
 
 /**
  * A sink for uploading files to Google Cloud Storage
@@ -15,40 +14,55 @@ class SinkGCS {
         this._bucket = this._storage.bucket('asset_pipe_v3');
     }
 
-    /**
-     * @param {File} file A File object describing the file to be uploaded
-     * @returns stream.Writable
-     * @memberof SinkGCS
-     **/
-
-    write(file) {
-        if(!(file instanceof File)) throw new TypeError('Argument "file" must be an instance of File');
-        const src = this._bucket.file(file.path);
-        return src.createWriteStream({
+    write(filePath, contentType) {
+        const src = this._bucket.file(filePath);
+        const gcsStream = src.createWriteStream({
             resumable: false,
             metadata: {
                 cacheControl: 'public, max-age=31536000',
-                contentType: file.type,
+                contentType,
             },
             gzip: true,
         });
+
+        gcsStream.on('error', error => {
+            // console.log('ERROR', error);
+        });
+
+        gcsStream.on('finish', () => {
+            // console.log('END');
+        });
+
+        return gcsStream;
     }
 
-    /**
-     * @param {File} file A File object describing the file to be downloaded
-     * @returns stream.Readable
-     * @memberof SinkGCS
-     **/
+    read(filePath) {
+        const src = this._bucket.file(filePath);
+        const gcsStream = src.createReadStream()
 
-    read(file) {
-        if(!(file instanceof File)) throw new TypeError('Argument "file" must be an instance of File');
-        const src = this._bucket.file(file.path);
-        return src.createReadStream();
+        gcsStream.on('error', error => {
+            // console.log('ERROR', error);
+        });
+
+        gcsStream.on('response', function(response) {
+            // console.log('RESPONSE', response);
+        });
+
+        gcsStream.on('end', function() {
+            // console.log('END');
+        });
+
+        return gcsStream;
     }
 
-    delete(file) {
-        if(!(file instanceof File)) throw new TypeError('Argument "file" must be an instance of File');
-
+    delete(filePath) {
+        const src = this._bucket.file(filePath);
+        return new Promise((resolve, reject) => {
+            src.delete(error => {
+                if (error) return reject(error);
+                resolve();
+            });
+        });
     }
 }
 module.exports = SinkGCS;

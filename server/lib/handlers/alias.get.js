@@ -50,7 +50,7 @@ const handler = (sink, req, org, type, name, alias, extra) => {
 
         let obj = {};
         try {
-            obj = await utils.fetchAsJSON(sink, path);
+            obj = await utils.readJSON(sink, path);
         } catch(error) {
             // TODO; log error?
         }

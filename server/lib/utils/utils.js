@@ -1,8 +1,8 @@
 'use strict';
 
-const { Writable, pipeline } = require('stream');
+const { Writable, Readable, pipeline } = require('stream');
 
-const fetchAsJSON = (sink, path) => {
+const readJSON = (sink, path) => {
     return new Promise((resolve, reject) => {
         const buffer = [];
 
@@ -28,4 +28,27 @@ const fetchAsJSON = (sink, path) => {
         });
     });
 };
-module.exports.fetchAsJSON = fetchAsJSON;
+module.exports.readJSON = readJSON;
+
+
+const writeJSON = (sink, path, obj, contentType) => {
+    return new Promise((resolve, reject) => {
+        const buffer = Buffer.from(JSON.stringify(obj));
+
+        const from = new Readable({
+            objectMode: false,
+            read() {
+                this.push(buffer);
+                this.push(null);
+            }
+        });
+
+        const to = sink.write(path, contentType);
+
+        pipeline(from, to, (error) => {
+            if (error) return reject(error);
+            resolve(buffer);
+        });
+    });
+};
+module.exports.writeJSON = writeJSON;

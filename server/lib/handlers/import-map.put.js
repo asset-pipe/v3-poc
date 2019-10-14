@@ -57,7 +57,7 @@ const Parser = class Parser extends Duplex {
             const path = ImportMap.buildPath(incoming.org, incoming.type, incoming.name);
             let obj = {};
             try {
-                obj = await utils.fetchAsJSON(sink, path);
+                obj = await utils.readJSON(sink, path);
             } catch(error) {
                 // TODO; log error?
             }

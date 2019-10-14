@@ -1,8 +1,8 @@
 'use strict';
 
-const { Transform } = require('stream');
+const { PassThrough } = require('stream');
 
-class HttpOutgoing extends Transform {
+class HttpOutgoing extends PassThrough {
     constructor() {
         super();
         this._statusCode = 200;
@@ -32,11 +32,6 @@ class HttpOutgoing extends Transform {
 
     get mimeType() {
         return this._mimeType;
-    }
-
-    _transform(data, encoding, callback) {
-        this.push(data);
-        callback();
     }
 }
 module.exports = HttpOutgoing;
